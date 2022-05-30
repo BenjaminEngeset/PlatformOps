@@ -1,0 +1,50 @@
+#
+# PSRule for Azure configuration
+#
+
+# Please see the documentation for all configuration options:
+# https://aka.ms/ps-rule-azure
+
+# Use rules from the following modules/
+include:
+  module:
+    - "PSRule.Rules.Azure"
+
+# Require a minimum version of modules that include referenced baseline.
+requires:
+  PSRule.Rules.Azure: "@pre >=1.15.2"
+
+execution:
+  # Ignore warnings for resources and objects that don't have any rules.
+  notProcessedWarning: false
+
+configuration:
+  # Enable expansion for Bicep source files.
+  AZURE_BICEP_FILE_EXPANSION: true
+
+  # Expand Bicep module from Azure parameter files.
+  AZURE_PARAMETER_FILE_EXPANSION: true
+
+  # Set timeout for expanding Bicep source files.
+  AZURE_BICEP_FILE_EXPANSION_TIMEOUT: 15
+
+input:
+  pathIgnore:
+    # Ignore common files that don't need analysis.
+    - "**/bicepconfig.json"
+    - "*.md"
+    - "*.png"
+    - ".pipelines/"
+
+    # Include deployments.
+    - "!root/**/*.bicep"
+    - "!root/**/*.json"
+
+rule:
+  exclude:
+    # Ignore these recommendations for this repo.
+    - Azure.Resource.UseTags
+    - Azure.ACR.ContentTrust
+
+    # Currently a bug as of v1.15.2. Must review in the next release.
+    - Azure.PublicIP.Name

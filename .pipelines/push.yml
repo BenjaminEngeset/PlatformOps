@@ -1,0 +1,59 @@
+name: "PlatformOps - Push"
+
+#
+# Triggers
+# Automated triggers are configured via branch policies
+# within the repo.
+#
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - root
+
+variables:
+
+  #
+  # Shared variables
+  # Include shared variables from the 'vars.yml' file
+  # to not have to repeat them in every pipeline.
+  #
+
+  - template: .templates/vars.yml
+
+jobs:
+
+  - job: push
+
+    #
+    # Push
+    # Before running the resource deployment,
+    # we need to validate the repo state
+    # is up to date and we won't encounter conflicts.
+    #
+
+    displayName: "Push"
+    pool:
+      vmImage: ubuntu-20.04
+
+    steps:
+
+      #
+      # Shared steps
+      # Include shared steps from the 'shared.yml' file
+      # to not have to repeat them in every pipeline.
+      #
+
+      - template: .templates/shared-steps.yml
+
+      #
+      # Deploy
+      # Deploy any templates changed in the last commit.
+      #
+
+      - template: .templates/validate-deploy.yml
+        parameters:
+          deploy: true
