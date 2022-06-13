@@ -10,11 +10,11 @@ variables:
   # - ARM_CLIENT_ID
   # - ARM_CLIENT_SECRET
   # - ARM_ENVIRONMENT
-  # - AZOPS_MODULE_VERSION   
+  # - AZOPS_MODULE_VERSION
   #
 
   - group: credentials
-  
+
   #
   # modulesFolder
   # To enable caching of PowerShell modules between
@@ -23,4 +23,4 @@ variables:
   #
 
   - name: modulesFolder
-    value: '$(System.DefaultWorkingDirectory)/Modules'
+    value: "$(System.DefaultWorkingDirectory)/Modules"

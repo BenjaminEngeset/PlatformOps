@@ -32,8 +32,8 @@ schedules:
 
 resources:
   pipelines:
-    - pipeline: 'TriggerPull'
-      source: 'PlatformOps - Push'
+    - pipeline: "TriggerPull"
+      source: "PlatformOps - Push"
       trigger:
         branches:
           include:
@@ -47,7 +47,7 @@ variables:
   # to not have to repeat them in every pipeline.
   #
 
-  - template: .templates/vars.yml
+  - template: templates/vars.yml
 
   #
   # Folder Name
@@ -106,11 +106,11 @@ jobs:
 
       #
       # Shared steps
-      # Include shared steps from the 'shared.yml' file
+      # Include shared steps from the 'shared-steps.yml' file
       # to not have to repeat them in every pipeline.
       #
-      
-      - template: .templates/shared-steps.yml
+
+      - template: templates/shared-steps.yml
 
       #
       # Configure
@@ -127,7 +127,7 @@ jobs:
 
       #
       # Checkout
-      # Switch branches and create new branch.
+      # Create a new branch and switch branches.
       #
 
       - task: Bash@3

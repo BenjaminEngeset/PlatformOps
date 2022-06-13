@@ -22,11 +22,12 @@ variables:
   # to not have to repeat them in every pipeline.
   #
 
-  - template: .templates/vars.yml
+  - template: templates/vars.yml
 
 jobs:
 
   - job: push
+    condition: not(contains(variables['Build.SourceVersionMessage'], 'from automated into main'))
 
     #
     # Push
@@ -43,17 +44,17 @@ jobs:
 
       #
       # Shared steps
-      # Include shared steps from the 'shared.yml' file
+      # Include shared steps from the 'shared-steps.yml' file
       # to not have to repeat them in every pipeline.
       #
 
-      - template: .templates/shared-steps.yml
+      - template: templates/shared-steps.yml
 
       #
       # Deploy
       # Deploy any templates changed in the last commit.
       #
 
-      - template: .templates/validate-deploy.yml
+      - template: templates/validate-deploy.yml
         parameters:
           deploy: true
