@@ -12,7 +12,11 @@ include:
 
 # Require a minimum version of modules that include referenced baseline.
 requires:
-  PSRule.Rules.Azure: "@pre >=1.15.2"
+  PSRule.Rules.Azure: "@pre >=1.16.1"
+
+output:
+  culture:
+    - "en-US"
 
 execution:
   # Ignore warnings for resources and objects that don't have any rules.
@@ -36,7 +40,7 @@ input:
     - "*.png"
     - ".pipelines/"
 
-    # Include deployments.
+    # Include templates.
     - "!root/**/*.bicep"
     - "!root/**/*.json"
 
@@ -45,6 +49,3 @@ rule:
     # Ignore these recommendations for this repo.
     - Azure.Resource.UseTags
     - Azure.ACR.ContentTrust
-
-    # Currently a bug as of v1.15.2. Must review in the next release.
-    - Azure.PublicIP.Name

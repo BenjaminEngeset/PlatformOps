@@ -5,10 +5,10 @@ parameters:
 
 steps:
 
-    #
-    # Diff
-    # List index changes.
-    #
+  #
+  # Diff
+  # List index changes.
+  #
 
   - task: Bash@3
     displayName: "Diff"
@@ -39,10 +39,9 @@ steps:
       inputs:
         targetType: "inline"
         script: |
+          Write-Output "##vso[task.setvariable variable=waf]results"
           Install-Module PSRule.Rules.Azure -Scope CurrentUser -Force;
           git diff --diff-filter=d HEAD^ HEAD --name-only | ForEach-Object { Get-ChildItem $_ } | Assert-PSRule -Format File -Module 'PSRule.Rules.Azure' -Baseline 'Azure.GA_2022_03' -OutputFormat NUnit3 -OutputPath 'reports/ps-rule-results.xml'
-
-
 
   - task: PowerShell@2
     ${{ if ne(parameters.deploy, true) }}:
@@ -52,6 +51,7 @@ steps:
     inputs:
       targetType: "inline"
       script: |
+        Write-Output "##vso[task.setvariable variable=whatif]results"
         $Env:PSModulePath = $Env:PSModulePath, '$(modulesFolder)' -join [IO.Path]::PathSeparator
         $RunWhatIf = -not ('${{parameters.deploy}}' -eq 'true')
         Import-PSFConfig -Path settings.json -Schema MetaJson -EnableException
@@ -65,3 +65,13 @@ steps:
           Invoke-AzOpsPush -ChangeSet $diff -WhatIf:$RunWhatIf
         }
         Get-Job | Remove-Job -Force
+
+  - ${{ if ne(parameters.deploy, true) }}:
+    - task: Bash@3
+      displayName: "Validate non-template files"
+      inputs:
+        targetType: "inline"
+        script: |
+          echo "##vso[task.setvariable variable=megalinter]results"
+          docker pull megalinter/megalinter:beta
+          docker run -v $(System.DefaultWorkingDirectory):/tmp/lint -e GIT_AUTHORIZATION_BEARER=$(System.AccessToken) megalinter/megalinter:beta

@@ -35,7 +35,7 @@ steps:
     condition: ne(variables['AZOPS_MODULE_VERSION'], '')
     # This task will restore modules from cache if key is found.
     inputs:
-      key:  '"AzOpsModule" | "$(AZOPS_MODULE_VERSION)"'
+      key: '"AzOpsModule" | "$(AZOPS_MODULE_VERSION)"'
       path: $(modulesFolder)
       cacheHitVar: AzOpsModule_IsCached
 
@@ -66,7 +66,8 @@ steps:
   #
   # Connect
   # Authenticate Azure context
-  # Value must be specified ARM_CLIENT_ID. 
+  # If no value is set for ARM_CLIENT_ID connect will try
+  # to use a Managed Identity.
   #
 
   - task: PowerShell@2

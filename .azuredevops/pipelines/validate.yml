@@ -16,7 +16,7 @@ variables:
   # to not have to repeat them in every pipeline.
   #
 
-  - template: .templates/vars.yml
+  - template: templates/vars.yml
 
 jobs:
 
@@ -34,21 +34,35 @@ jobs:
   
       #
       # Shared steps
-      # Include shared steps from the 'shared.yml' file
+      # Include shared steps from the 'shared-steps.yml' file
       # to not have to repeat them in every pipeline.
       #
-      
-      - template: .templates/shared-steps.yml
+
+      - template: templates/shared-steps.yml
 
       #
       # Validate
-      # Run what-if deployment on any templates changed
-      # in the last commit.
+      # Run Well-Architected Framework, WhatIf operation on any templates changed in the last commit and MegaLinter
+      # on non-template files in the code base.
       #
-      
-      - template: .templates/validate-deploy.yml
+
+      - template: templates/validate-deploy.yml
         parameters:
           deploy: false
+
+      #
+      # Results
+      # Post results as a NUnit report to the pipeline.
+      #
+
+      - task: PublishTestResults@2
+        displayName: "Publish Well-Architected Framework results"
+        condition: contains(variables['waf'], 'results')
+        inputs:
+          testRunner: "NUnit"
+          testResultsFiles: "reports/ps-rule-*.xml"
+          mergeTestResults: true
+          testRunTitle: "Well-Architected Framework"
 
       #
       # Results
@@ -56,7 +70,8 @@ jobs:
       #
 
       - task: PowerShell@2
-        displayName: 'Results'
+        displayName: "Publish WhatIf results"
+        condition: contains(variables['whatif'], 'results')
         inputs:
           targetType: "inline"
           script: |
@@ -73,3 +88,15 @@ jobs:
                 } | ConvertTo-Json) `
                 -Uri $uri
             }
+
+      #
+      # Results
+      # Post results as an artifact to the pipeline.
+      #
+
+      - task: PublishPipelineArtifact@1
+        displayName: "Publish MegaLinter results"
+        condition: contains(variables['megalinter'], 'results')
+        inputs:
+          targetPath: "$(System.DefaultWorkingDirectory)/report/"
+          artifactName: "MegaLinterReport"
