@@ -38,7 +38,7 @@ input:
     - "**/bicepconfig.json"
     - "*.md"
     - "*.png"
-    - ".pipelines/"
+    - ".azuredevops/"
 
     # Include templates.
     - "!root/**/*.bicep"
