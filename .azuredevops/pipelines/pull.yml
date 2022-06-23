@@ -184,7 +184,6 @@ jobs:
           script: |
             git add ./$(folder)
 
-
       #
       # Commit
       # Record changes to the repo.
@@ -198,7 +197,6 @@ jobs:
           script: |
             git commit -m "$(commit_message)"
 
-
       #
       # Push
       # Update remote refs along with associated objects.
@@ -211,7 +209,6 @@ jobs:
           targetType: "inline"
           script: |
             git push origin $(branch) -f
-
 
       #
       # Merge

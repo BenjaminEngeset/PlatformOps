@@ -65,7 +65,7 @@ steps:
 
   #
   # Connect
-  # Authenticate Azure context
+  # Authenticate Azure context.
   # If no value is set for ARM_CLIENT_ID connect will try
   # to use a Managed Identity.
   #
