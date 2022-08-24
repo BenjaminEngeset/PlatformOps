@@ -1,5 +1,5 @@
 #
-# PSRule for Azure configuration
+# PSRule Preview for Azure configuration
 #
 
 # Please see the documentation for all configuration options:
@@ -13,7 +13,7 @@ include:
 # Require a minimum version of modules that include referenced baseline.
 requires:
   PSRule: "@pre >=2.3.2"
-  PSRule.Rules.Azure: "@pre >=1.18.1"
+  PSRule.Rules.Azure: "@pre >=1.19.0-B0010"
 
 output:
   culture:
@@ -45,7 +45,7 @@ input:
     - "*.png"
     - ".azuredevops/"
 
-    # Include templates.
+   # Include templates.
     - "!root/**/*.bicep"
     - "!root/**/*.json"
 

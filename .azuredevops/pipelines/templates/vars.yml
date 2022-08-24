@@ -9,8 +9,7 @@ variables:
   # - ARM_SUBSCRIPTION_ID
   # - ARM_CLIENT_ID
   # - ARM_CLIENT_SECRET
-  # - ARM_ENVIRONMENT
-  # - AZOPS_MODULE_VERSION
+  # - ARM_SERVICE_NAME
   #
 
   - group: credentials

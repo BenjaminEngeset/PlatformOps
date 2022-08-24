@@ -10,38 +10,57 @@ steps:
   # List index changes.
   #
 
-  - task: Bash@3
+  - task: PowerShell@2
     displayName: "Diff"
     inputs:
       targetType: "inline"
       script: |
-        if [ ! -z "$(git diff --name-status HEAD^ HEAD)" ]; then
-          echo $(git diff --name-status HEAD^ HEAD)
-          git diff --name-status HEAD^ HEAD > /tmp/diff.txt
-          if [ ! -z "$(git diff --diff-filter=D HEAD^ HEAD --no-renames)" ]; then
-          echo $(git diff --diff-filter=D HEAD^ HEAD  --no-prefix --no-renames | grep ^- | sed -r "s/^([^-+ ]*)[-+ ]/\\1/" | less -r)
-          git diff --diff-filter=D HEAD^ HEAD --no-prefix --no-renames | grep ^- | sed -r "s/^([^-+ ]*)[-+ ]/\\1/" | less -r > /tmp/diffdeletedfiles.txt
-          fi
-        else
-          echo "The validation pipeline failed because there is currently no change to be processed."
-          exit 1
-        fi
+        $gitDiff = git diff --name-status HEAD^ HEAD
+        if($null -ne $gitDiff) {
+            $gitDiff | Write-Host
+            $gitDiff | Out-File -FilePath '/tmp/diff.txt'
+            
+            $deletedContent = git diff --diff-filter=D HEAD^ HEAD --no-prefix --no-renames
+            if($null -ne $deletedContent) {
+                $deletedContent = $deletedContent -match '^-' -replace '^([^-+ ]*)[-+ ]', '$1'
+                Write-Host '##[group]Deleted files content'
+                $deletedContent | Write-Host
+                Write-Host '##[endgroup]'
+                $deletedContent | Out-File -FilePath '/tmp/diffdeletedfiles.txt'
+            }
+        }
+        else {
+            Write-Host '##[error]The validation pipeline failed because there is currently no change to be processed'
+            exit 1
+        }
 
   #
   # Validate or Deploy
   # If parameter "deploy" is set to true, then deploy the changes,
   # otherwise validate the changes.
   #
+  
+  #
+  # Validate
+  # Run Well-Architected Framework to validate the contents of the Bicep files.
+  #
 
   - ${{ if ne(parameters.deploy, true) }}:
-    - task: PowerShell@2
-      displayName: "Validate with Well-Architected Framework"
+    - task: AzurePowerShell@5
+      displayName: "Validate Bicep files with Well-Architected Framework"
       inputs:
-        targetType: "inline"
-        script: |
-          Write-Output "##vso[task.setvariable variable=waf]results"
+        ConnectedServiceNameARM: $(ARM_SERVICE_NAME)
+        scriptType: "inlineScript"
+        inline: |
+          Write-Host "##vso[task.setvariable variable=waf]results"
           Install-Module PSRule.Rules.Azure -Scope CurrentUser -Force;
-          git diff --diff-filter=d HEAD^ HEAD --name-only | ForEach-Object { Get-ChildItem $_ } | Assert-PSRule -Format File -Module 'PSRule.Rules.Azure' -Baseline 'Azure.GA_2022_03' -OutputFormat NUnit3 -OutputPath 'reports/ps-rule-results.xml'
+          git diff --diff-filter=d HEAD^ HEAD --name-only | ForEach-Object { Get-ChildItem $_ } | Assert-PSRule -Format File -Module 'PSRule.Rules.Azure' -Baseline 'Azure.GA_2022_06' -OutputFormat NUnit3 -OutputPath 'reports/ps-rule-results.xml'
+        azurePowerShellVersion: latestVersion
+
+  #
+  # Validate
+  # Preview the effects of the deployment.
+  #
 
   - task: PowerShell@2
     ${{ if ne(parameters.deploy, true) }}:
@@ -51,7 +70,7 @@ steps:
     inputs:
       targetType: "inline"
       script: |
-        Write-Output "##vso[task.setvariable variable=whatif]results"
+        Write-Host "##vso[task.setvariable variable=whatif]results"
         $Env:PSModulePath = $Env:PSModulePath, '$(modulesFolder)' -join [IO.Path]::PathSeparator
         $RunWhatIf = -not ('${{parameters.deploy}}' -eq 'true')
         Import-PSFConfig -Path settings.json -Schema MetaJson -EnableException
@@ -66,12 +85,17 @@ steps:
         }
         Get-Job | Remove-Job -Force
 
+  #
+  # Validate
+  # Run MegaLinter on files in the code base.
+  #
+
   - ${{ if ne(parameters.deploy, true) }}:
     - task: Bash@3
-      displayName: "Validate non-template files"
+      displayName: "Validate files with MegaLinter"
       inputs:
         targetType: "inline"
         script: |
           echo "##vso[task.setvariable variable=megalinter]results"
-          docker pull megalinter/megalinter:beta
-          docker run -v $(System.DefaultWorkingDirectory):/tmp/lint -e GIT_AUTHORIZATION_BEARER=$(System.AccessToken) megalinter/megalinter:beta
+          docker pull oxsecurity/megalinter:v6
+          docker run -v $(System.DefaultWorkingDirectory):/tmp/lint -e GIT_AUTHORIZATION_BEARER=$(System.AccessToken) oxsecurity/megalinter:v6

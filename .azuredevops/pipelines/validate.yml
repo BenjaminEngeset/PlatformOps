@@ -43,7 +43,7 @@ jobs:
       #
       # Validate
       # Run Well-Architected Framework, WhatIf operation on any templates changed in the last commit and MegaLinter
-      # on non-template files in the code base.
+      # on files in the code base.
       #
 
       - template: templates/validate-deploy.yml
@@ -98,5 +98,5 @@ jobs:
         displayName: "Publish MegaLinter results"
         condition: contains(variables['megalinter'], 'results')
         inputs:
-          targetPath: "$(System.DefaultWorkingDirectory)/report/"
+          targetPath: "$(System.DefaultWorkingDirectory)/megalinter-reports/"
           artifactName: "MegaLinterReport"

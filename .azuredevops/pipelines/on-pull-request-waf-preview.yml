@@ -1,0 +1,66 @@
+name: "PlatformOps - On Pull Request Well-Architected Framework Preview"
+
+#
+# Triggers
+# Automated triggers are configured via branch policies
+# within the repo.
+#
+
+trigger: none
+
+variables:
+  - group: credentials
+
+jobs:
+
+  - job: pr
+
+    #
+    # On pull request well-architected framework preview
+    #
+
+    displayName: "On Pull Request Well-Architected Framework Preview"
+    pool:
+      vmImage: "ubuntu-20.04"
+
+    steps:
+
+      #
+      # Checkout
+      # Checks-out the repository.
+      #
+
+      - checkout: self
+        fetchDepth: 0
+
+      #
+      # Validate
+      # Run Well-Architected Framework to validate the contents of the Bicep files.
+      #
+
+      - task: AzurePowerShell@5
+        displayName: "Validate Bicep files with Well-Architected Framework Preview"
+        inputs:
+          ConnectedServiceNameARM: $(ARM_SERVICE_NAME)
+          scriptType: "inlineScript"
+          inline: |
+            Write-Host "##vso[task.setvariable variable=waf]results"
+            Install-Module -Name PowerShellGet -Repository PSGallery -Scope CurrentUser -Force;
+            Install-Module PSRule -AllowPrerelease -Scope CurrentUser -Force;
+            Install-Module PSRule.Rules.Azure -AllowPrerelease -Scope CurrentUser -Force;
+            git diff --diff-filter=d HEAD^ HEAD --name-only | ForEach-Object { Get-ChildItem $_ } | Assert-PSRule -Option 'ps-rule.preview.yml' -Format File -Module 'PSRule.Rules.Azure' -Baseline 'Azure.Preview' -OutputFormat NUnit3 -OutputPath 'reports/ps-rule-preview-results.xml'
+          azurePowerShellVersion: latestVersion
+
+      #
+      # Results
+      # Post results as a NUnit report to the pipeline.
+      #
+
+      - task: PublishTestResults@2
+        displayName: "Publish Well-Architected Framework Preview results"
+        condition: contains(variables['waf'], 'results')
+        inputs:
+          testRunner: "NUnit"
+          testResultsFiles: "reports/ps-rule-preview-*.xml"
+          mergeTestResults: true
+          testRunTitle: "Well-Architected Framework Preview"
